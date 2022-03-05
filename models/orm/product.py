@@ -12,52 +12,6 @@ import uuid
 from .base import Base, TimestampMixin
 
 
-class Category(Base, TimestampMixin):
-    """Product category model with hierarchical support."""
-    
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid.uuid4
-    )
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
-    slug: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    image_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
-    
-    # Hierarchical structure
-    parent_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("category.id"),
-        nullable=True
-    )
-    
-    # SEO and display
-    meta_title: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
-    meta_description: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    
-    # Relationships
-    parent: Mapped[Optional["Category"]] = relationship(
-        "Category",
-        remote_side="Category.id",
-        back_populates="children"
-    )
-    children: Mapped[List["Category"]] = relationship(
-        "Category",
-        back_populates="parent",
-        cascade="all, delete-orphan"
-    )
-    products: Mapped[List["Product"]] = relationship(
-        "Product",
-        back_populates="category"
-    )
-    
-    def __repr__(self) -> str:
-        return f"<Category(id={self.id}, name={self.name}, slug={self.slug})>"
-
-
 class Product(Base, TimestampMixin):
     """Product model for customizable shoes."""
     
@@ -65,11 +19,6 @@ class Product(Base, TimestampMixin):
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4
-    )
-    category_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("category.id"),
-        nullable=False
     )
     
     # Basic product information
@@ -97,7 +46,6 @@ class Product(Base, TimestampMixin):
     images: Mapped[Optional[List[str]]] = mapped_column(JSON, nullable=True)
     
     # Relationships
-    category: Mapped["Category"] = relationship("Category", back_populates="products")
     variants: Mapped[List["ProductVariant"]] = relationship(
         "ProductVariant",
         back_populates="product",
@@ -115,7 +63,6 @@ class Product(Base, TimestampMixin):
     
     # Indexes
     __table_args__ = (
-        Index('ix_product_category_id', 'category_id'),
         Index('ix_product_slug', 'slug'),
         Index('ix_product_is_active', 'is_active'),
         Index('ix_product_is_featured', 'is_featured'),
