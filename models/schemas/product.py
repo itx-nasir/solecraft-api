@@ -9,47 +9,6 @@ from pydantic import BaseModel, Field, ConfigDict
 import uuid
 
 
-class CategoryBase(BaseModel):
-    """Base category schema."""
-    name: str = Field(..., max_length=100)
-    slug: str = Field(..., max_length=100)
-    description: Optional[str] = None
-    image_url: Optional[str] = Field(None, max_length=500)
-    parent_id: Optional[uuid.UUID] = None
-    meta_title: Optional[str] = Field(None, max_length=200)
-    meta_description: Optional[str] = Field(None, max_length=500)
-    is_active: bool = Field(default=True)
-    sort_order: int = Field(default=0)
-
-
-class CategoryCreate(CategoryBase):
-    """Category creation schema."""
-    pass
-
-
-class CategoryUpdate(BaseModel):
-    """Category update schema."""
-    name: Optional[str] = Field(None, max_length=100)
-    slug: Optional[str] = Field(None, max_length=100)
-    description: Optional[str] = None
-    image_url: Optional[str] = Field(None, max_length=500)
-    parent_id: Optional[uuid.UUID] = None
-    meta_title: Optional[str] = Field(None, max_length=200)
-    meta_description: Optional[str] = Field(None, max_length=500)
-    is_active: Optional[bool] = None
-    sort_order: Optional[int] = None
-
-
-class CategoryResponse(CategoryBase):
-    """Category response schema."""
-    id: uuid.UUID
-    created_at: datetime
-    updated_at: datetime
-    children: List["CategoryResponse"] = []
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class ProductCustomizationBase(BaseModel):
     """Base product customization schema."""
     name: str = Field(..., max_length=100)
@@ -150,12 +109,11 @@ class ProductBase(BaseModel):
 
 class ProductCreate(ProductBase):
     """Product creation schema."""
-    category_id: uuid.UUID
+    pass
 
 
 class ProductUpdate(BaseModel):
     """Product update schema."""
-    category_id: Optional[uuid.UUID] = None
     name: Optional[str] = Field(None, max_length=200)
     slug: Optional[str] = Field(None, max_length=200)
     description: Optional[str] = None
@@ -173,10 +131,8 @@ class ProductUpdate(BaseModel):
 class ProductResponse(ProductBase):
     """Product response schema."""
     id: uuid.UUID
-    category_id: uuid.UUID
     created_at: datetime
     updated_at: datetime
-    category: CategoryResponse
     variants: List[ProductVariantResponse] = []
     customizations: List[ProductCustomizationResponse] = []
 
@@ -192,7 +148,6 @@ class ProductListResponse(BaseModel):
     base_price: Decimal
     is_featured: bool
     images: Optional[List[str]]
-    category: CategoryResponse
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -200,14 +155,9 @@ class ProductListResponse(BaseModel):
 class ProductSearchRequest(BaseModel):
     """Product search request schema."""
     query: Optional[str] = None
-    category_id: Optional[uuid.UUID] = None
     min_price: Optional[Decimal] = Field(None, ge=0)
     max_price: Optional[Decimal] = Field(None, ge=0)
     color: Optional[str] = None
     size: Optional[str] = None
     is_featured: Optional[bool] = None
-    is_customizable: Optional[bool] = None
-
-
-# Update forward references
-CategoryResponse.model_rebuild() 
+    is_customizable: Optional[bool] = None 
