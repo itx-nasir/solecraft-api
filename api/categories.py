@@ -42,7 +42,7 @@ async def create_category(
         return StandardResponse(
             success=True,
             message="Category created successfully",
-            data=category
+            data=CategoryResponse.model_validate(category)
         )
     except Exception as e:
         logger.error("Failed to create category", error=str(e), exc_info=True)
@@ -66,7 +66,7 @@ async def list_categories(
         return StandardResponse(
             success=True,
             message="Categories retrieved successfully",
-            data=categories
+            data=[CategoryResponse.model_validate(cat) for cat in categories]
         )
     except Exception as e:
         logger.error("Failed to list categories", error=str(e), exc_info=True)
@@ -95,7 +95,7 @@ async def get_category(
     return StandardResponse(
         success=True,
         message="Category found",
-        data=category
+        data=CategoryResponse.model_validate(category)
     )
 
 @router.put(
@@ -124,7 +124,7 @@ async def update_category(
         return StandardResponse(
             success=True,
             message="Category updated successfully",
-            data=category
+            data=CategoryResponse.model_validate(category)
         )
     except Exception as e:
         logger.error("Failed to update category", error=str(e), exc_info=True)
