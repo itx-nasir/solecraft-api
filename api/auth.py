@@ -55,7 +55,13 @@ async def register(
         token_response = TokenResponse(
             access_token=access_token,
             expires_in=30 * 60,  # 30 minutes
-            user={"id": str(user.id), "email": user.email, "is_guest": False, "is_verified": user.is_verified}
+            user={
+                "id": str(user.id),
+                "email": user.email,
+                "is_guest": False,
+                "is_verified": user.is_verified,
+                "is_admin": user.is_admin
+            }
         )
 
         return StandardResponse(
@@ -98,7 +104,13 @@ async def login(
         token_response = TokenResponse(
             access_token=access_token,
             expires_in=30 * 60,  # 30 minutes
-            user={"id": str(user.id), "email": user.email, "is_guest": user.is_guest, "is_verified": user.is_verified}
+            user={
+                "id": str(user.id),
+                "email": user.email,
+                "is_guest": user.is_guest,
+                "is_verified": user.is_verified,
+                "is_admin": user.is_admin
+            }
         )
         
         return StandardResponse(
