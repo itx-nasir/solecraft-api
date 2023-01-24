@@ -84,9 +84,11 @@ app = FastAPI(
 # Import and include API routers
 from api.auth import router as auth_router
 from api.users import router as users_router
+from api.products import router as products_router
 
 app.include_router(auth_router)
 app.include_router(users_router)
+app.include_router(products_router)
 
 
 # Add CORS middleware
