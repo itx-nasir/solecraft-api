@@ -7,7 +7,8 @@ from functools import lru_cache
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from repositories.user_repository import UserRepository, AddressRepository
-from interfaces.repositories import IUserRepository
+from repositories.product_repository import ProductRepository
+from interfaces.repositories import IUserRepository, IProductRepository
 
 
 class Container:
@@ -23,6 +24,7 @@ class Container:
         # Repository factories
         self._factories['user_repository'] = lambda session: UserRepository(session)
         self._factories['address_repository'] = lambda session: AddressRepository(session)
+        self._factories['product_repository'] = lambda session: ProductRepository(session)
     
     def get_repository(self, repository_type: str, session: AsyncSession) -> Any:
         """Get repository instance."""
