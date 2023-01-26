@@ -41,6 +41,15 @@ from .user import (
     PasswordResetConfirm,
     EmailVerificationRequest,
     ResendVerificationRequest,
+    PermissionBase,
+    PermissionCreate,
+    PermissionUpdate,
+    PermissionResponse,
+    RoleBase,
+    RoleCreate,
+    RoleUpdate,
+    RoleResponse,
+    UserRoleAssignment,
 )
 
 # Product schemas
@@ -139,6 +148,15 @@ __all__ = [
     "PasswordResetConfirm",
     "EmailVerificationRequest",
     "ResendVerificationRequest",
+    "PermissionBase",
+    "PermissionCreate",
+    "PermissionUpdate",
+    "PermissionResponse",
+    "RoleBase",
+    "RoleCreate",
+    "RoleUpdate",
+    "RoleResponse",
+    "UserRoleAssignment",
     
     # Product
     "CategoryBase",
