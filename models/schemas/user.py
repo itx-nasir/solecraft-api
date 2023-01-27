@@ -55,6 +55,67 @@ class AddressResponse(AddressBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+class PermissionBase(BaseModel):
+    """Base permission schema."""
+    name: str = Field(..., max_length=100)
+    codename: str = Field(..., max_length=100)
+    description: Optional[str] = None
+    resource: str = Field(..., max_length=50)
+    action: str = Field(..., max_length=50)
+
+
+class PermissionCreate(PermissionBase):
+    """Permission creation schema."""
+    pass
+
+
+class PermissionUpdate(BaseModel):
+    """Permission update schema."""
+    name: Optional[str] = Field(None, max_length=100)
+    description: Optional[str] = None
+
+
+class PermissionResponse(PermissionBase):
+    """Permission response schema."""
+    id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RoleBase(BaseModel):
+    """Base role schema."""
+    name: str = Field(..., max_length=100)
+    description: Optional[str] = None
+    is_active: bool = Field(default=True)
+    level: int = Field(default=0, ge=0, le=100)
+
+
+class RoleCreate(RoleBase):
+    """Role creation schema."""
+    permission_ids: List[uuid.UUID] = Field(default_factory=list)
+
+
+class RoleUpdate(BaseModel):
+    """Role update schema."""
+    name: Optional[str] = Field(None, max_length=100)
+    description: Optional[str] = None
+    is_active: Optional[bool] = None
+    level: Optional[int] = Field(None, ge=0, le=100)
+    permission_ids: Optional[List[uuid.UUID]] = None
+
+
+class RoleResponse(RoleBase):
+    """Role response schema."""
+    id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+    permissions: List[PermissionResponse] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class UserBase(BaseModel):
     """Base user schema."""
     email: Optional[EmailStr] = None
@@ -86,10 +147,12 @@ class UserResponse(UserBase):
     is_guest: bool
     is_active: bool
     is_verified: bool
+    is_staff: bool
     last_login: Optional[datetime]
     created_at: datetime
     updated_at: datetime
     addresses: List[AddressResponse] = []
+    roles: List[RoleResponse] = []
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -140,4 +203,10 @@ class EmailVerificationRequest(BaseModel):
 
 class ResendVerificationRequest(BaseModel):
     """Resend verification email request schema."""
-    email: EmailStr 
+    email: EmailStr
+
+
+class UserRoleAssignment(BaseModel):
+    """User role assignment schema."""
+    user_id: uuid.UUID
+    role_ids: List[uuid.UUID] 
