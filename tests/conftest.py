@@ -13,6 +13,7 @@ from main import app
 from core.config import settings
 from infrastructure.database import get_async_session
 from models.orm import Base
+from middleware.auth import get_password_hash, create_access_token
 
 # Test database URL
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
@@ -104,4 +105,93 @@ def sample_address_data():
         "country": "Test Country",
         "address_type": "home",
         "is_default": True
+    }
+
+
+@pytest_asyncio.fixture
+async def admin_user_token(client: AsyncClient, db_session: AsyncSession):
+    """Create an admin user and return its auth token."""
+    from models.orm import User, Role, Permission
+    from middleware.auth import get_password_hash, create_access_token
+
+    # Create necessary permissions
+    product_create_perm = Permission(
+        name="Create Product",
+        codename="product:create",
+        resource="product",
+        action="create"
+    )
+    product_update_perm = Permission(
+        name="Update Product", 
+        codename="product:update",
+        resource="product",
+        action="update"
+    )
+    product_delete_perm = Permission(
+        name="Delete Product",
+        codename="product:delete", 
+        resource="product",
+        action="delete"
+    )
+    
+    db_session.add_all([product_create_perm, product_update_perm, product_delete_perm])
+    await db_session.flush()
+
+    # Create admin role with permissions
+    admin_role = Role(
+        name="admin",
+        description="Administrator role for testing",
+        level=90,
+        permissions=[product_create_perm, product_update_perm, product_delete_perm]
+    )
+    db_session.add(admin_role)
+    await db_session.flush()
+
+    admin_email = "admin@example.com"
+    admin_password = "AdminPassword123!"
+    
+    # Create admin user directly in the database
+    admin_user = User(
+        email=admin_email,
+        password_hash=get_password_hash(admin_password),
+        is_staff=True,
+        is_active=True,
+        is_verified=True,
+        first_name="Admin",
+        last_name="User",
+        roles=[admin_role]
+    )
+    db_session.add(admin_user)
+    await db_session.commit()
+    await db_session.refresh(admin_user)
+
+    # Create an access token for the admin user
+    access_token = create_access_token(data={"sub": str(admin_user.id)})
+    return access_token
+
+
+@pytest_asyncio.fixture
+async def test_category(db_session: AsyncSession):
+    """Create a test category."""
+    from models.orm import Category
+    from slugify import slugify
+    
+    name = "Test Category"
+    category = Category(name=name, slug=slugify(name))
+    db_session.add(category)
+    await db_session.commit()
+    await db_session.refresh(category)
+    return category
+
+
+@pytest.fixture
+def sample_product_data(test_category):
+    """Sample product data for testing."""
+    return {
+        "name": "Test Shoe",
+        "slug": "test-shoe",
+        "description": "A very fine shoe for testing.",
+        "base_price": "99.99",
+        "category_id": str(test_category.id),
+        "is_active": True
     } 
