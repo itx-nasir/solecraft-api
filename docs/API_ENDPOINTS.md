@@ -370,7 +370,7 @@ Delete a product.
 
 ---
 
-## 🛒 Cart Endpoints (To be implemented)
+## 🛒 Cart Endpoints
 
 ### GET `/cart`
 Get current user's cart.
@@ -410,7 +410,7 @@ Get cart summary with totals.
 
 ---
 
-## 📦 Order Endpoints (To be implemented)
+## 📦 Order Endpoints
 
 ### POST `/checkout`
 Create order from cart.
@@ -483,7 +483,7 @@ Get detailed order information.
 
 ---
 
-## 🏷️ Category Endpoints (To be implemented)
+## 🏷️ Category Endpoints
 
 ### GET `/categories`
 Get all product categories with hierarchy.
@@ -532,7 +532,7 @@ Delete category.
 
 ---
 
-## 💳 Discount Endpoints (To be implemented)
+## �� Discount Endpoints
 
 ### POST `/discounts/validate`
 Validate discount code.
@@ -561,7 +561,7 @@ Validate discount code.
 
 ---
 
-## 📊 Admin Endpoints (To be implemented)
+## 📊 Admin Endpoints
 
 ### GET `/admin/dashboard`
 Get admin dashboard statistics.
@@ -577,7 +577,7 @@ Update order status.
 
 ---
 
-## 🔍 Search Endpoints (To be implemented)
+## 🔍 Search Endpoints
 
 ### GET `/search/products`
 Search products with filters.
@@ -672,12 +672,12 @@ Rate limit headers are included in responses:
 
 ## 📋 Notes for Frontend Development
 
-1. **Cart & Order endpoints** are defined in schemas but not yet implemented in API routes
-2. **Category endpoints** are defined in schemas but not yet implemented in API routes
-3. **Search functionality** is available in services but not exposed via API routes
-4. **File upload** for product images is configured but routes not implemented
-5. **Review system** is defined in schemas but API routes not implemented
-6. **Discount system** is defined in schemas but API routes not implemented
+1. **Cart & Order endpoints** are defined in schemas and now implemented in API routes.
+2. **Category endpoints** are defined in schemas and now implemented in API routes.
+3. **Search functionality** is now exposed via API routes.
+4. **File upload** for product images is configured but routes not implemented.
+5. **Review system** is defined in schemas and now implemented in API routes.
+6. **Discount system** is defined in schemas and now implemented in API routes.
 
 ## 🚀 Implementation Status
 
@@ -690,13 +690,19 @@ Rate limit headers are included in responses:
 - RBAC permission system
 - Rate limiting
 - Health checks
-
-⏳ **To Be Implemented:**
 - Cart management endpoints
 - Order management endpoints
 - Category management endpoints
 - Search endpoints
 - Review endpoints
 - Discount/coupon endpoints
+- Admin dashboard endpoints
+
+⏳ **To Be Implemented:**
 - File upload endpoints
-- Admin dashboard endpoints 
+- Granular, role-based permissions (currently uses simple admin checks)
+- Payment Gateway Integration (Stripe, etc.)
+- Email Notifications (Welcome, Order Confirmation, etc.)
+- Advanced Search (e.g., Elasticsearch)
+- Wishlist functionality
+- Product recommendations 
