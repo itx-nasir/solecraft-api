@@ -54,4 +54,5 @@ mkdocs-material==9.4.8
 
 # Additional dependencies
 watchfiles
-python-slugify 
+python-slugify
+shortuuid 
