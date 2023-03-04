@@ -45,9 +45,6 @@ mypy==1.7.1
 structlog==23.2.0
 sentry-sdk[fastapi]==1.38.0
 
-# Rate limiting
-slowapi==0.1.9
-
 # Documentation
 mkdocs==1.5.3
 mkdocs-material==9.4.8
