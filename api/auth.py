@@ -4,8 +4,6 @@ Authentication API routes.
 
 from fastapi import APIRouter, Depends, status, Request, HTTPException, BackgroundTasks
 from fastapi.security import HTTPBearer
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_async_session
@@ -13,7 +11,6 @@ from models.schemas import (
     UserRegister, UserLogin, GuestUserCreate, TokenResponse, StandardResponse,
     EmailVerificationRequest, ResendVerificationRequest
 )
-from middleware.rate_limit import limiter
 from services.user_service import UserService
 from services import background_tasks_service
 from core.security import create_access_token
@@ -32,7 +29,6 @@ security = HTTPBearer()
     summary="Register new user",
     description="Register a new user account with email and password"
 )
-@limiter.limit("5/minute")
 async def register(
     request: Request,
     user_data: UserRegister,
@@ -82,7 +78,6 @@ async def register(
     summary="User login",
     description="Authenticate user with email and password"
 )
-@limiter.limit("10/minute")
 async def login(
     request: Request,
     login_data: UserLogin,
@@ -127,7 +122,6 @@ async def login(
     summary="Create guest user",
     description="Create a guest user session for anonymous checkout"
 )
-@limiter.limit("20/minute")
 async def create_guest(
     request: Request,
     guest_data: GuestUserCreate,
