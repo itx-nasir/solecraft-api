@@ -179,7 +179,6 @@ Once the application is running, you can access the interactive API documentatio
 #### Products
 - `GET /products` - List products with search and filters
 - `GET /products/{slug}` - Get product details
-- `GET /categories` - List categories
 - `GET /products/{id}/reviews` - Product reviews
 
 #### Cart & Orders

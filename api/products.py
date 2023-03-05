@@ -53,11 +53,10 @@ async def create_product(
     "",
     response_model=PaginatedResponse[ProductListResponse],
     summary="List products",
-    description="Get a paginated list of products. Can be filtered by category."
+    description="Get a paginated list of products."
 )
 async def list_products(
     pagination: PaginationParams = Depends(),
-    category_id: Optional[UUID] = Query(None, description="Filter by category ID"),
     is_featured: Optional[bool] = Query(None, description="Filter by featured products"),
     session: AsyncSession = Depends(get_async_session)
 ):
@@ -66,7 +65,7 @@ async def list_products(
     """
     try:
         product_service = ProductService(session)
-        filters = {"category_id": category_id, "is_featured": is_featured}
+        filters = {"is_featured": is_featured}
         products, total = await product_service.list_products(pagination, filters)
         total_pages = (total + pagination.page_size - 1) // pagination.page_size
         return PaginatedResponse(
