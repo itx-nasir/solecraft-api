@@ -244,7 +244,6 @@ Get paginated list of products with optional filters.
 **Query Parameters:**
 - `page` (int): Page number (default: 1)
 - `page_size` (int): Items per page (default: 20, max: 100)
-- `category_id` (UUID): Filter by category
 - `is_featured` (bool): Filter featured products
 
 **Response:**
@@ -258,12 +257,7 @@ Get paginated list of products with optional filters.
       "short_description": "Comfortable everyday sneaker",
       "base_price": 99.99,
       "is_featured": true,
-      "images": ["url1", "url2"],
-      "category": {
-        "id": "uuid",
-        "name": "Sneakers",
-        "slug": "sneakers"
-      }
+      "images": ["url1", "url2"]
     }
   ],
   "total": 50,
@@ -299,12 +293,6 @@ Get detailed product information by ID.
       "sole": "Rubber"
     },
     "images": ["url1", "url2", "url3"],
-    "category": {
-      "id": "uuid",
-      "name": "Sneakers",
-      "slug": "sneakers",
-      "description": "Category description"
-    },
     "variants": [
       {
         "id": "uuid",
@@ -346,7 +334,6 @@ Create a new product.
 {
   "name": "New Sneaker",
   "slug": "new-sneaker",
-  "category_id": "uuid",
   "base_price": 129.99,
   "description": "Product description",
   "short_description": "Brief description",
@@ -483,84 +470,6 @@ Get detailed order information.
 
 ---
 
-## 🏷️ Category Endpoints
-
-### GET `/categories`
-Get all product categories with hierarchy.
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": "uuid",
-      "name": "Footwear",
-      "slug": "footwear",
-      "description": "All types of shoes",
-      "image_url": "category-image.jpg",
-      "is_active": true,
-      "sort_order": 1,
-      "children": [
-        {
-          "id": "uuid",
-          "name": "Sneakers",
-          "slug": "sneakers",
-          "parent_id": "uuid",
-          "children": []
-        }
-      ]
-    }
-  ]
-}
-```
-
-### GET `/categories/{category_id}`
-Get single category with products.
-
-### POST `/categories` 🔒
-Create new category.
-**Auth Required:** Yes (category:create permission)
-
-### PUT `/categories/{category_id}` 🔒
-Update category.
-**Auth Required:** Yes (category:update permission)
-
-### DELETE `/categories/{category_id}` 🔒
-Delete category.
-**Auth Required:** Yes (category:delete permission)
-
----
-
-## �� Discount Endpoints
-
-### POST `/discounts/validate`
-Validate discount code.
-
-**Request Body:**
-```json
-{
-  "code": "SAVE10",
-  "cart_total": 199.99
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "valid": true,
-    "discount_amount": 20.00,
-    "discount_type": "percentage",
-    "discount_value": 10,
-    "message": "10% discount applied"
-  }
-}
-```
-
----
-
 ## 📊 Admin Endpoints
 
 ### GET `/admin/dashboard`
@@ -584,7 +493,6 @@ Search products with filters.
 
 **Query Parameters:**
 - `q` (string): Search query
-- `category_id` (UUID): Filter by category
 - `min_price` (decimal): Minimum price
 - `max_price` (decimal): Maximum price
 - `size` (string): Filter by size
@@ -673,11 +581,10 @@ Rate limit headers are included in responses:
 ## 📋 Notes for Frontend Development
 
 1. **Cart & Order endpoints** are defined in schemas and now implemented in API routes.
-2. **Category endpoints** are defined in schemas and now implemented in API routes.
-3. **Search functionality** is now exposed via API routes.
-4. **File upload** for product images is configured but routes not implemented.
-5. **Review system** is defined in schemas and now implemented in API routes.
-6. **Discount system** is defined in schemas and now implemented in API routes.
+2. **Search functionality** is now exposed via API routes.
+3. **File upload** for product images is configured but routes not implemented.
+4. **Review system** is defined in schemas and now implemented in API routes.
+5. **Discount system** is defined in schemas and now implemented in API routes.
 
 ## 🚀 Implementation Status
 
@@ -692,7 +599,6 @@ Rate limit headers are included in responses:
 - Health checks
 - Cart management endpoints
 - Order management endpoints
-- Category management endpoints
 - Search endpoints
 - Review endpoints
 - Discount/coupon endpoints
