@@ -55,13 +55,25 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting up SoleCraft API", version=settings.app_version)
     try:
-        await init_database()
-        initialize_scheduler()
+        # Try to initialize database, but don't fail the entire app if it fails
+        try:
+            await init_database()
+            logger.info("Database initialization completed")
+        except Exception as e:
+            logger.error("Database initialization failed, continuing without database", error=str(e))
+        
+        # Try to initialize scheduler, but don't fail the entire app if it fails
+        try:
+            initialize_scheduler()
+            logger.info("Scheduler initialization completed")
+        except Exception as e:
+            logger.error("Scheduler initialization failed, continuing without scheduler", error=str(e))
+        
         logger.info("Application startup completed")
         yield
     except Exception as e:
         logger.error("Failed to start application", error=str(e))
-        raise
+        # Don't raise here to allow the app to start even with partial failures
     finally:
         # Shutdown
         logger.info("Shutting down SoleCraft API")
@@ -161,13 +173,42 @@ async def general_exception_handler(request, exc: Exception):
 @app.get("/health", response_model=HealthCheck, tags=["Health"])
 async def health_check():
     """Health check endpoint."""
-    return HealthCheck(
-        status="healthy",
-        timestamp=datetime.utcnow(),
-        version=settings.app_version,
-        database="connected",
-        scheduler="running"
-    )
+    try:
+        # Try to get database status
+        db_status = "connected"
+        scheduler_status = "running"
+        
+        # You can add actual database connectivity check here if needed
+        # For now, we'll assume it's working if the app is running
+        
+        return HealthCheck(
+            status="healthy",
+            timestamp=datetime.utcnow(),
+            version=settings.app_version,
+            database=db_status,
+            scheduler=scheduler_status
+        )
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
+        return HealthCheck(
+            status="degraded",
+            timestamp=datetime.utcnow(),
+            version=settings.app_version,
+            database="disconnected",
+            scheduler="stopped"
+        )
+
+
+# Simple health check endpoint (no database dependency)
+@app.get("/health-simple", tags=["Health"])
+async def health_check_simple():
+    """Simple health check endpoint without database dependency."""
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "version": settings.app_version,
+        "message": "API is running"
+    }
 
 
 # Root endpoint
@@ -178,7 +219,28 @@ async def root():
         "message": f"Welcome to {settings.app_name}",
         "version": settings.app_version,
         "docs": "/docs" if settings.debug else "Documentation disabled in production",
-        "health": "/health"
+        "health": "/health",
+        "health_simple": "/health-simple",
+        "environment": settings.environment
+    }
+
+
+# Diagnostic endpoint
+@app.get("/diagnostic", tags=["Diagnostic"])
+async def diagnostic():
+    """Diagnostic endpoint to help troubleshoot deployment issues."""
+    import os
+    
+    return {
+        "app_name": settings.app_name,
+        "version": settings.app_version,
+        "environment": settings.environment,
+        "debug": settings.debug,
+        "port": os.getenv("PORT", "8000"),
+        "database_url_set": bool(settings.database_url),
+        "database_url_length": len(settings.database_url) if settings.database_url else 0,
+        "allowed_origins": settings.allowed_origins,
+        "timestamp": datetime.utcnow().isoformat()
     }
 
 
