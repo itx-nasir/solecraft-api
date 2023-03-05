@@ -30,8 +30,6 @@ These endpoints are accessible to the general public, including guest and authen
 ### Products & Categories
 - `GET /products`: Get a paginated list of products.
 - `GET /products/{product_id}`: Get detailed information for a single product.
-- `GET /categories`: Get all product categories.
-- `GET /categories/{category_id}`: Get a single category with its products.
 
 ### Cart
 - `GET /cart`: Get the current user's shopping cart.
@@ -68,10 +66,7 @@ These endpoints are protected and require administrator privileges.
 - `PUT /products/{product_id}`: Update an existing product.
 - `DELETE /products/{product_id}`: Delete a product.
 
-### Category Management
-- `POST /categories`: Create a new category.
-- `PUT /categories/{category_id}`: Update an existing category.
-- `DELETE /categories/{category_id}`: Delete a category.
+
 
 ### Discount Management
 - `POST /discounts`: Create a new discount code.
