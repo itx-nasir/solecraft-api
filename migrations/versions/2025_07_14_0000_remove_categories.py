@@ -19,7 +19,7 @@ def upgrade():
     with op.batch_alter_table('product') as batch_op:
         batch_op.drop_constraint('fk_product_category_id_category', type_='foreignkey')
         batch_op.drop_column('category_id')
-        batch_op.drop_index('ix_product_category_id')
+        # batch_op.drop_index('ix_product_category_id')  # <-- Remove or comment out this line
     # Drop category table
     op.drop_table('category')
 
