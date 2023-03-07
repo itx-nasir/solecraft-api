@@ -147,8 +147,6 @@ class ProductService:
     def _apply_filters(self, filters: Dict[str, Any]) -> list:
         """Helper to apply filter conditions."""
         conditions = []
-        if "category_id" in filters and filters["category_id"] is not None:
-            conditions.append(Product.category_id == filters["category_id"])
         if "is_featured" in filters and filters["is_featured"] is not None:
             conditions.append(Product.is_featured == filters["is_featured"])
         return conditions 
