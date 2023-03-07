@@ -169,20 +169,6 @@ async def admin_user_token(client: AsyncClient, db_session: AsyncSession):
     return access_token
 
 
-@pytest_asyncio.fixture
-async def test_category(db_session: AsyncSession):
-    """Create a test category."""
-    from models.orm import Category
-    from slugify import slugify
-    
-    name = "Test Category"
-    category = Category(name=name, slug=slugify(name))
-    db_session.add(category)
-    await db_session.commit()
-    await db_session.refresh(category)
-    return category
-
-
 @pytest.fixture
 def sample_product_data(test_category):
     """Sample product data for testing."""
