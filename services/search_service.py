@@ -35,8 +35,6 @@ class SearchService:
                 )
             )
         
-        if search_params.category_id:
-            filters.append(Product.category_id == search_params.category_id)
         if search_params.min_price is not None:
             filters.append(Product.base_price >= search_params.min_price)
         if search_params.max_price is not None:
