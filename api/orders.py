@@ -17,7 +17,6 @@ from models.schemas.order import (
     OrderListResponse,
 )
 from models.schemas.common import StandardResponse, PaginatedResponse, PaginationParams
-from middleware.rate_limit import limiter
 
 logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/orders", tags=["Orders"])
@@ -30,7 +29,6 @@ router = APIRouter(prefix="/orders", tags=["Orders"])
     summary="Create an order from cart",
     description="Initiate the checkout process, converting the user's cart into a formal order.",
 )
-@limiter.limit("5/minute")
 async def checkout(
     request: Request,
     checkout_data: CheckoutRequest,

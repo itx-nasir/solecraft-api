@@ -19,7 +19,6 @@ from models.schemas.order import (
     DiscountValidation,
 )
 from models.schemas.common import StandardResponse
-from middleware.rate_limit import limiter
 
 logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/discounts", tags=["Discounts"])
@@ -34,7 +33,6 @@ class DiscountValidationRequest(BaseModel):
     summary="Validate a discount code",
     description="Checks if a discount code is valid and returns the discount amount.",
 )
-@limiter.limit("20/minute")
 async def validate_discount(
     request: Request,
     validation_data: DiscountValidationRequest,
