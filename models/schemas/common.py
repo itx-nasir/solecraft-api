@@ -62,6 +62,9 @@ class HealthCheck(BaseModel):
     version: str
     database: str = Field(default="connected")
     scheduler: str = Field(default="running")
+    environment: str = Field(default="development")
+    port: str = Field(default="8000")
+    missing_env_vars: Optional[List[str]] = None
 
 
 class TokenResponse(BaseModel):

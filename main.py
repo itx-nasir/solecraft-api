@@ -2,45 +2,19 @@
 Main FastAPI application entry point.
 """
 
-print("=== MAIN.PY STARTING ===")
-
 from contextlib import asynccontextmanager
-print("✓ asynccontextmanager imported")
-
 from fastapi import FastAPI, HTTPException
-print("✓ FastAPI imported")
-
 from fastapi.middleware.cors import CORSMiddleware
-print("✓ CORSMiddleware imported")
-
 from fastapi.responses import JSONResponse
-print("✓ JSONResponse imported")
-
 import structlog
-print("✓ structlog imported")
-
 import sentry_sdk
-print("✓ sentry_sdk imported")
-
 from sentry_sdk.integrations.fastapi import FastApiIntegration
-print("✓ FastApiIntegration imported")
-
 from datetime import datetime
-print("✓ datetime imported")
 
 from core.config import settings
-print("✓ settings imported")
-
 from core.database import init_database, close_database
-print("✓ database functions imported")
-
 from models.schemas import HealthCheck, ErrorResponse
-print("✓ schemas imported")
-
 from core.scheduler import initialize_scheduler, shutdown_scheduler
-print("✓ scheduler imported")
-
-print("=== ALL IMPORTS COMPLETED ===")
 
 
 # Configure structured logging
@@ -79,51 +53,36 @@ if settings.sentry_dsn:
 async def lifespan(app: FastAPI):
     """Application lifespan context manager."""
     # Startup
-    print("=== LIFESPAN STARTUP BEGINNING ===")
     logger.info("Starting up SoleCraft API", version=settings.app_version)
-    print(f"App version: {settings.app_version}")
-    print(f"Environment: {settings.environment}")
-    
     try:
-        print("=== INITIALIZING DATABASE ===")
         # Try to initialize database, but don't fail the entire app if it fails
         try:
             await init_database()
             logger.info("Database initialization completed")
-            print("Database initialization completed")
         except Exception as e:
             logger.error("Database initialization failed, continuing without database", error=str(e))
-            print(f"Database initialization failed: {e}")
         
-        print("=== INITIALIZING SCHEDULER ===")
         # Try to initialize scheduler, but don't fail the entire app if it fails
         try:
             initialize_scheduler()
             logger.info("Scheduler initialization completed")
-            print("Scheduler initialization completed")
         except Exception as e:
             logger.error("Scheduler initialization failed, continuing without scheduler", error=str(e))
-            print(f"Scheduler initialization failed: {e}")
         
         logger.info("Application startup completed")
-        print("=== APPLICATION STARTUP COMPLETED ===")
         yield
     except Exception as e:
         logger.error("Failed to start application", error=str(e))
-        print(f"Failed to start application: {e}")
         # Don't raise here to allow the app to start even with partial failures
     finally:
         # Shutdown
-        print("=== LIFESPAN SHUTDOWN BEGINNING ===")
         logger.info("Shutting down SoleCraft API")
         try:
             shutdown_scheduler()
             await close_database()
             logger.info("Application shutdown completed")
-            print("Application shutdown completed")
         except Exception as e:
             logger.error("Error during shutdown", error=str(e))
-            print(f"Error during shutdown: {e}")
 
 
 # Create FastAPI application
@@ -210,46 +169,58 @@ async def general_exception_handler(request, exc: Exception):
     )
 
 
-# Health check endpoint
+# Comprehensive health check endpoint
 @app.get("/health", response_model=HealthCheck, tags=["Health"])
 async def health_check():
-    """Health check endpoint."""
-    try:
-        # Try to get database status
-        db_status = "connected"
-        scheduler_status = "running"
-        
-        # You can add actual database connectivity check here if needed
-        # For now, we'll assume it's working if the app is running
-        
-        return HealthCheck(
-            status="healthy",
-            timestamp=datetime.utcnow(),
-            version=settings.app_version,
-            database=db_status,
-            scheduler=scheduler_status
-        )
-    except Exception as e:
-        logger.error(f"Health check failed: {e}")
-        return HealthCheck(
-            status="degraded",
-            timestamp=datetime.utcnow(),
-            version=settings.app_version,
-            database="disconnected",
-            scheduler="stopped"
-        )
-
-
-# Simple health check endpoint (no database dependency)
-@app.get("/health-simple", tags=["Health"])
-async def health_check_simple():
-    """Simple health check endpoint without database dependency."""
-    return {
+    """Comprehensive health check endpoint that verifies all system components."""
+    import os
+    from sqlalchemy import text
+    
+    health_status = {
         "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.utcnow(),
         "version": settings.app_version,
-        "message": "API is running"
+        "database": "disconnected",
+        "scheduler": "stopped",
+        "environment": settings.environment,
+        "port": os.getenv("PORT", "8000")
     }
+    
+    # Check database connectivity
+    try:
+        from core.database import db_manager
+        if db_manager._async_engine:
+            async with db_manager._async_engine.begin() as conn:
+                await conn.execute(text("SELECT 1"))
+            health_status["database"] = "connected"
+        else:
+            health_status["database"] = "not_initialized"
+    except Exception as e:
+        logger.error(f"Database health check failed: {e}")
+        health_status["database"] = "error"
+        health_status["status"] = "degraded"
+    
+    # Check scheduler status
+    try:
+        from core.scheduler import scheduler
+        if scheduler.running:
+            health_status["scheduler"] = "running"
+        else:
+            health_status["scheduler"] = "stopped"
+            health_status["status"] = "degraded"
+    except Exception as e:
+        logger.error(f"Scheduler health check failed: {e}")
+        health_status["scheduler"] = "error"
+        health_status["status"] = "degraded"
+    
+    # Check environment variables
+    required_env_vars = ["DATABASE_URL", "SECRET_KEY", "JWT_SECRET_KEY"]
+    missing_vars = [var for var in required_env_vars if not os.getenv(var)]
+    if missing_vars:
+        health_status["missing_env_vars"] = missing_vars
+        health_status["status"] = "degraded"
+    
+    return HealthCheck(**health_status)
 
 
 # Root endpoint
@@ -261,27 +232,7 @@ async def root():
         "version": settings.app_version,
         "docs": "/docs" if settings.debug else "Documentation disabled in production",
         "health": "/health",
-        "health_simple": "/health-simple",
         "environment": settings.environment
-    }
-
-
-# Diagnostic endpoint
-@app.get("/diagnostic", tags=["Diagnostic"])
-async def diagnostic():
-    """Diagnostic endpoint to help troubleshoot deployment issues."""
-    import os
-    
-    return {
-        "app_name": settings.app_name,
-        "version": settings.app_version,
-        "environment": settings.environment,
-        "debug": settings.debug,
-        "port": os.getenv("PORT", "8000"),
-        "database_url_set": bool(settings.database_url),
-        "database_url_length": len(settings.database_url) if settings.database_url else 0,
-        "allowed_origins": settings.allowed_origins,
-        "timestamp": datetime.utcnow().isoformat()
     }
 
 
