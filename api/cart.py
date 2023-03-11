@@ -16,7 +16,6 @@ from models.schemas.cart import (
     UpdateCartItemRequest,
 )
 from models.schemas.common import StandardResponse
-from middleware.rate_limit import limiter
 
 logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/cart", tags=["Cart"])
@@ -67,7 +66,6 @@ async def get_cart(
     summary="Add item to cart",
     description="Add a product variant to the user's shopping cart.",
 )
-@limiter.limit("30/minute")
 async def add_item_to_cart(
     request: Request,
     item_data: AddToCartRequest,
@@ -97,7 +95,6 @@ async def add_item_to_cart(
     summary="Update cart item",
     description="Update the quantity or customizations of an item in the cart.",
 )
-@limiter.limit("30/minute")
 async def update_cart_item(
     request: Request,
     item_id: UUID,
@@ -135,7 +132,6 @@ async def update_cart_item(
     summary="Remove item from cart",
     description="Remove a specific item from the shopping cart.",
 )
-@limiter.limit("30/minute")
 async def remove_cart_item(
     request: Request,
     item_id: UUID,

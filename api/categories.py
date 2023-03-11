@@ -17,7 +17,6 @@ from models.schemas.product import (
     CategoryResponse,
 )
 from models.schemas.common import StandardResponse
-from middleware.rate_limit import limiter
 
 logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/categories", tags=["Categories"])
@@ -32,7 +31,6 @@ router = APIRouter(prefix="/categories", tags=["Categories"])
     description="Create a new product category. Requires admin privileges.",
     dependencies=[Depends(require_admin())],
 )
-@limiter.limit("10/minute")
 async def create_category(
     request: Request,
     category_data: CategoryCreate,
@@ -107,7 +105,6 @@ async def get_category(
     description="Update an existing category's information. Requires admin privileges.",
     dependencies=[Depends(require_admin())],
 )
-@limiter.limit("10/minute")
 async def update_category(
     request: Request,
     category_id: UUID,
@@ -144,7 +141,6 @@ async def update_category(
     description="Delete a category. Requires admin privileges.",
     dependencies=[Depends(require_admin())],
 )
-@limiter.limit("5/minute")
 async def delete_category(
     request: Request,
     category_id: UUID,
