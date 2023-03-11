@@ -2,19 +2,45 @@
 Main FastAPI application entry point.
 """
 
+print("=== MAIN.PY STARTING ===")
+
 from contextlib import asynccontextmanager
+print("✓ asynccontextmanager imported")
+
 from fastapi import FastAPI, HTTPException
+print("✓ FastAPI imported")
+
 from fastapi.middleware.cors import CORSMiddleware
+print("✓ CORSMiddleware imported")
+
 from fastapi.responses import JSONResponse
+print("✓ JSONResponse imported")
+
 import structlog
+print("✓ structlog imported")
+
 import sentry_sdk
+print("✓ sentry_sdk imported")
+
 from sentry_sdk.integrations.fastapi import FastApiIntegration
+print("✓ FastApiIntegration imported")
+
 from datetime import datetime
+print("✓ datetime imported")
 
 from core.config import settings
+print("✓ settings imported")
+
 from core.database import init_database, close_database
+print("✓ database functions imported")
+
 from models.schemas import HealthCheck, ErrorResponse
+print("✓ schemas imported")
+
 from core.scheduler import initialize_scheduler, shutdown_scheduler
+print("✓ scheduler imported")
+
+print("=== ALL IMPORTS COMPLETED ===")
 
 
 # Configure structured logging
@@ -53,36 +79,51 @@ if settings.sentry_dsn:
 async def lifespan(app: FastAPI):
     """Application lifespan context manager."""
     # Startup
+    print("=== LIFESPAN STARTUP BEGINNING ===")
     logger.info("Starting up SoleCraft API", version=settings.app_version)
+    print(f"App version: {settings.app_version}")
+    print(f"Environment: {settings.environment}")
+    
     try:
+        print("=== INITIALIZING DATABASE ===")
         # Try to initialize database, but don't fail the entire app if it fails
         try:
             await init_database()
             logger.info("Database initialization completed")
+            print("Database initialization completed")
         except Exception as e:
             logger.error("Database initialization failed, continuing without database", error=str(e))
+            print(f"Database initialization failed: {e}")
         
+        print("=== INITIALIZING SCHEDULER ===")
         # Try to initialize scheduler, but don't fail the entire app if it fails
         try:
             initialize_scheduler()
             logger.info("Scheduler initialization completed")
+            print("Scheduler initialization completed")
         except Exception as e:
             logger.error("Scheduler initialization failed, continuing without scheduler", error=str(e))
+            print(f"Scheduler initialization failed: {e}")
         
         logger.info("Application startup completed")
+        print("=== APPLICATION STARTUP COMPLETED ===")
         yield
     except Exception as e:
         logger.error("Failed to start application", error=str(e))
+        print(f"Failed to start application: {e}")
         # Don't raise here to allow the app to start even with partial failures
     finally:
         # Shutdown
+        print("=== LIFESPAN SHUTDOWN BEGINNING ===")
         logger.info("Shutting down SoleCraft API")
         try:
             shutdown_scheduler()
             await close_database()
             logger.info("Application shutdown completed")
+            print("Application shutdown completed")
         except Exception as e:
             logger.error("Error during shutdown", error=str(e))
+            print(f"Error during shutdown: {e}")
 
 
 # Create FastAPI application
