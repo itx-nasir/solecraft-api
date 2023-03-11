@@ -108,7 +108,11 @@ from api.reviews import router as reviews_router
 from api.search import router as search_router
 from api.admin import router as admin_router
 
+# Include routers with logging
+logger.info("Including auth router...")
 app.include_router(auth_router)
+logger.info("Auth router included successfully")
+
 app.include_router(users_router)
 app.include_router(products_router)
 app.include_router(categories_router)
@@ -234,6 +238,38 @@ async def root():
         "health": "/health",
         "environment": settings.environment
     }
+
+
+# Debug endpoint to list all routes
+@app.get("/debug/routes", tags=["Debug"])
+async def list_routes():
+    """List all available routes (development only)."""
+    if not settings.debug:
+        raise HTTPException(status_code=403, detail="Debug endpoint only available in development")
+    
+    routes = []
+    for route in app.routes:
+        if hasattr(route, 'path') and hasattr(route, 'methods'):
+            routes.append({
+                "path": route.path,
+                "methods": list(route.methods),
+                "name": getattr(route, 'name', 'Unknown')
+            })
+    
+    return {"routes": routes}
+
+
+# Simple test endpoint
+@app.post("/test-post")
+async def test_post():
+    """Simple test POST endpoint."""
+    return {"message": "POST request received successfully"}
+
+
+@app.get("/test-get")
+async def test_get():
+    """Simple test GET endpoint."""
+    return {"message": "GET request received successfully"}
 
 
 if __name__ == "__main__":
