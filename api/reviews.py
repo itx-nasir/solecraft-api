@@ -17,7 +17,6 @@ from models.schemas.common import (
     ReviewResponse,
     StandardResponse,
 )
-from middleware.rate_limit import limiter
 
 logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/reviews", tags=["Reviews"])
@@ -29,7 +28,6 @@ router = APIRouter(prefix="/reviews", tags=["Reviews"])
     summary="Submit a product review",
     description="Create a new review for a product. User must be authenticated.",
 )
-@limiter.limit("10/hour")
 async def create_review(
     request: Request,
     review_data: ReviewCreate,
@@ -84,7 +82,6 @@ async def get_product_reviews(
     summary="Update a review",
     description="Update a review that you have submitted.",
 )
-@limiter.limit("10/hour")
 async def update_review(
     review_id: UUID,
     review_data: ReviewUpdate,

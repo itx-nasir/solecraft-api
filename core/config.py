@@ -37,9 +37,6 @@ class Settings(BaseSettings):
     jwt_algorithm: str = Field(default="HS256", env="JWT_ALGORITHM")
     jwt_expire_minutes: int = Field(default=30, env="JWT_EXPIRE_MINUTES")
     
-    # Redis Configuration
-    redis_url: str = Field(default="redis://localhost:6379/0", env="REDIS_URL")
-    
     # Celery Configuration
     celery_broker_url: str = Field(default="redis://localhost:6379/1", env="CELERY_BROKER_URL")
     celery_result_backend: str = Field(default="redis://localhost:6379/2", env="CELERY_RESULT_BACKEND")
@@ -59,9 +56,6 @@ class Settings(BaseSettings):
     # File Upload Configuration
     upload_dir: str = Field(default="uploads", env="UPLOAD_DIR")
     max_file_size: int = Field(default=5242880, env="MAX_FILE_SIZE")  # 5MB
-    
-    # Rate Limiting
-    rate_limit_per_minute: int = Field(default=60, env="RATE_LIMIT_PER_MINUTE")
     
     # Pagination
     default_page_size: int = Field(default=20, env="DEFAULT_PAGE_SIZE")
