@@ -136,7 +136,14 @@ async def create_guest(
     Returns token for guest user that can be used for shopping and checkout.
     Guest sessions expire after 24 hours.
     """
-    return await UserController.create_guest(guest_data, session)
+    try:
+        user_service = UserService(session)
+        return await user_service.create_guest_user(guest_data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error("Guest user creation failed", error=str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/guest-token", response_model=TokenResponse)
