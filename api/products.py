@@ -14,7 +14,6 @@ from models.schemas import (
     ProductCreate, ProductUpdate, ProductResponse, ProductListResponse,
     StandardResponse, PaginatedResponse, PaginationParams
 )
-from middleware.rate_limit import limiter
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -29,7 +28,6 @@ router = APIRouter(prefix="/products", tags=["Products"])
     description="Create a new product. Requires admin access.",
     dependencies=[Depends(require_admin())]
 )
-@limiter.limit("10/minute")
 async def create_product(
     request: Request,
     product_data: ProductCreate,
@@ -112,7 +110,6 @@ async def get_product(
     description="Update an existing product's information. Requires admin access.",
     dependencies=[Depends(require_admin())]
 )
-@limiter.limit("10/minute")
 async def update_product(
     request: Request,
     product_id: UUID,
@@ -143,7 +140,6 @@ async def update_product(
     description="Delete a product. Requires admin access.",
     dependencies=[Depends(require_admin())]
 )
-@limiter.limit("5/minute")
 async def delete_product(
     request: Request,
     product_id: UUID,

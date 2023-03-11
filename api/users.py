@@ -15,7 +15,6 @@ from models.schemas import (
     StandardResponse
 )
 from models.orm import User
-from middleware.rate_limit import limiter
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -56,7 +55,6 @@ async def get_profile(
     summary="Update user profile",
     description="Update current user's profile information"
 )
-@limiter.limit("10/minute")
 async def update_profile(
     request: Request,
     user_data: UserUpdate,
@@ -117,7 +115,6 @@ async def get_addresses(
     summary="Add new address",
     description="Add a new address to user's address book"
 )
-@limiter.limit("20/minute")
 async def add_address(
     request: Request,
     address_data: AddressCreate,
@@ -146,7 +143,6 @@ async def add_address(
     summary="Update address",
     description="Update an existing address"
 )
-@limiter.limit("20/minute")
 async def update_address(
     request: Request,
     address_id: UUID,
@@ -182,7 +178,6 @@ async def update_address(
     summary="Delete address",
     description="Delete an address from user's address book"
 )
-@limiter.limit("20/minute")
 async def delete_address(
     request: Request,
     address_id: UUID,
