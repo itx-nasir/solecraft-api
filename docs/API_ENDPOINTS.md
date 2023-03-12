@@ -292,30 +292,7 @@ Get detailed product information by ID.
       "material": "Canvas",
       "sole": "Rubber"
     },
-    "images": ["url1", "url2", "url3"],
-    "variants": [
-      {
-        "id": "uuid",
-        "name": "Size 8 - White",
-        "sku": "CS-8-WHITE",
-        "size": "8",
-        "color": "White",
-        "price": 99.99,
-        "stock_quantity": 10,
-        "is_active": true
-      }
-    ],
-    "customizations": [
-      {
-        "id": "uuid",
-        "name": "Text Embroidery",
-        "type": "text",
-        "description": "Add custom text",
-        "price": 15.00,
-        "required": false,
-        "options": {}
-      }
-    ]
+    "images": ["url1", "url2", "url3"]
   }
 }
 ```
