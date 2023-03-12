@@ -51,8 +51,6 @@ class ProductService:
             select(Product)
             .options(
                 selectinload(Product.category),
-                selectinload(Product.variants),
-                selectinload(Product.customizations),
                 selectinload(Product.reviews),
             )
             .where(Product.id == product_id)
