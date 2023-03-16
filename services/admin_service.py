@@ -48,6 +48,7 @@ class AdminService:
             )
             .where(Order.id == order_id)
         )
+        
         order = result.scalars().first()
         if not order:
             return None
