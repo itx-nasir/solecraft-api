@@ -62,8 +62,10 @@ async def update_order_status(
     order = await admin_service.update_order_status(session, order_id, status_update)
     if not order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found.")
+    # Convert ORM to Pydantic schema while session is open
+    order_response = OrderResponse.model_validate(order)
     return StandardResponse(
         success=True,
         message="Order status updated successfully.",
-        data=order
+        data=order_response
     ) 
