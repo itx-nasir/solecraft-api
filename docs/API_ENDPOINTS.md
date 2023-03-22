@@ -348,20 +348,12 @@ Add item to cart.
 ```json
 {
   "product_variant_id": "uuid",
-  "quantity": 2,
-  "customizations": [
-    {
-      "customization_id": "uuid",
-      "type": "text",
-      "value": "Custom Text",
-      "price": 15.00
-    }
-  ]
+  "quantity": 2
 }
 ```
 
 ### PUT `/cart/items/{item_id}`
-Update cart item quantity or customizations.
+Update cart item quantity.
 **Auth Required:** Yes
 
 ### DELETE `/cart/items/{item_id}`
@@ -431,14 +423,7 @@ Get detailed order information.
         "sku": "CS-8-WHITE",
         "quantity": 2,
         "unit_price": 99.99,
-        "total_price": 199.98,
-        "customizations": {
-          "text_embroidery": {
-            "type": "text",
-            "value": "JD",
-            "price": 15.00
-          }
-        }
+        "total_price": 199.98
       }
     ]
   }
