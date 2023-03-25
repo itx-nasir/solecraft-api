@@ -9,7 +9,6 @@ from pydantic import BaseModel, Field, ConfigDict
 import uuid
 
 from .user import AddressResponse
-from .product import ProductVariantResponse
 
 
 OrderStatus = Literal["pending", "confirmed", "processing", "shipped", "delivered", "cancelled", "refunded"]
@@ -34,7 +33,6 @@ class OrderItemResponse(BaseModel):
     order_id: uuid.UUID
     product_id: uuid.UUID
     product_name: str
-    variant_name: str
     sku: str
     quantity: int
     unit_price: Decimal

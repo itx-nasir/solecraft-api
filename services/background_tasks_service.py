@@ -210,16 +210,15 @@ def send_low_inventory_alert(alert_data: dict):
         email_service = EmailService()
         subject = "Low Inventory Alert"
         product_name = alert_data.get("product_name", "N/A")
-        variant_name = alert_data.get("variant_name", "N/A")
         current_stock = alert_data.get("current_stock", "N/A")
         
         html_content = f"""
         <h1>Low Inventory Alert</h1>
-        <p>Product: {product_name} - {variant_name}</p>
+        <p>Product: {product_name}</p>
         <p>Current Stock: {current_stock}</p>
         """
         
-        text_content = f"Low Inventory Alert: {product_name} - {variant_name} is low on stock ({current_stock} left)."
+        text_content = f"Low Inventory Alert: {product_name} is low on stock ({current_stock} left)."
         
         # This alert should probably go to an admin email address
         admin_email = settings.admin_email 
@@ -242,7 +241,7 @@ def send_low_inventory_alert(alert_data: dict):
 
 from core.database import get_async_session
 from models.orm.order import Order, OrderItem
-from models.orm.product import ProductVariant
+from models.orm.product import Product
 from models.orm.user import User
 from models.orm.cart import Cart, CartItem
 from sqlalchemy import select, delete, and_, func
@@ -314,19 +313,18 @@ async def update_inventory_after_order(order_id: int):
             low_stock_alerts = []
             
             for item in order_items:
-                variant_result = await session.execute(
-                    select(ProductVariant).where(ProductVariant.id == item.product_variant_id)
+                product_result = await session.execute(
+                    select(Product).where(Product.id == item.product_id)
                 )
-                variant = variant_result.scalar_one_or_none()
+                product = product_result.scalar_one_or_none()
                 
-                if variant:
-                    variant.stock_quantity -= item.quantity
-                    if variant.stock_quantity <= 5:
+                if product:
+                    product.stock_quantity -= item.quantity
+                    if product.stock_quantity <= 5:
                         low_stock_alerts.append({
-                            "variant_id": variant.id,
-                            "product_name": variant.product.name,
-                            "variant_name": variant.name,
-                            "current_stock": variant.stock_quantity
+                            "product_id": product.id,
+                            "product_name": product.name,
+                            "current_stock": product.stock_quantity
                         })
             
             await session.commit()
@@ -385,18 +383,17 @@ async def check_low_inventory():
         logger.info("Checking for low inventory")
         async with get_async_session() as session:
             result = await session.execute(
-                select(ProductVariant).where(ProductVariant.stock_quantity <= 5)
+                select(Product).where(Product.stock_quantity <= 5)
             )
-            low_stock_variants = result.scalars().all()
+            low_stock_products = result.scalars().all()
             
-            for variant in low_stock_variants:
+            for product in low_stock_products:
                 send_low_inventory_alert({
-                    "variant_id": variant.id,
-                    "product_name": variant.product.name,
-                    "variant_name": variant.name,
-                    "current_stock": variant.stock_quantity
+                    "product_id": product.id,
+                    "product_name": product.name,
+                    "current_stock": product.stock_quantity
                 })
-        logger.info(f"Found {len(low_stock_variants)} variants with low stock.")
+        logger.info(f"Found {len(low_stock_products)} products with low stock.")
 
     except Exception as e:
         logger.error("Failed to check low inventory", error=str(e))

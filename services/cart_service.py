@@ -11,7 +11,7 @@ from sqlalchemy.orm import selectinload, joinedload
 import structlog
 
 from models.orm.cart import Cart, CartItem
-from models.orm.product import ProductVariant
+from models.orm.product import Product
 from models.orm.user import User
 from models.schemas.cart import AddToCartRequest, UpdateCartItemRequest
 
@@ -31,7 +31,7 @@ class CartService:
                 .where(Cart.user_id == user_id)
                 .options(
                     selectinload(Cart.items).options(
-                        joinedload(CartItem.product_variant)
+                        joinedload(CartItem.product)
                     )
                 )
             )
@@ -48,28 +48,19 @@ class CartService:
     async def _calculate_item_prices(
         self,
         session: AsyncSession,
-        product_variant_id: UUID,
+        product_id: UUID,
         quantity: int,
-        customizations: Optional[List[Dict[str, Any]]] = None
     ) -> (Decimal, Decimal, Dict[str, Any]):
         """Calculate unit price, total price, and format customizations."""
-        variant = await session.get(ProductVariant, product_variant_id, options=[joinedload(ProductVariant.product)])
-        if not variant:
-            raise ValueError("Product variant not found")
+        product = await session.get(Product, product_id)
+        if not product:
+            raise ValueError("Product not found")
 
-        unit_price = variant.product.base_price + variant.price_adjustment
+        unit_price = product.base_price
         customization_price = Decimal("0.00")
         formatted_customizations = {}
 
-        if customizations:
-            for custom_data in customizations:
-                # In a real scenario, you'd validate customization_id and options
-                customization_price += Decimal(str(custom_data.get("price", 0)))
-                formatted_customizations[str(custom_data["customization_id"])] = {
-                    "type": custom_data["type"],
-                    "value": custom_data["value"],
-                    "price": Decimal(str(custom_data["price"]))
-                }
+        # Remove all logic and references to ProductVariant, product_variant, and customizations throughout the file.
 
         unit_price += customization_price
         total_price = unit_price * quantity
@@ -91,10 +82,9 @@ class CartService:
                 (
                     item
                     for item in cart.items
-                    if item.product_variant_id == item_data.product_variant_id
+                    if item.product_id == item_data.product_id
                     # This comparison is simplistic. A real implementation needs a robust way
                     # to compare customization dictionaries.
-                    and item.customizations == {str(c.customization_id): c.model_dump(exclude={'customization_id'}) for c in item_data.customizations or []}
                 ),
                 None,
             )
@@ -103,25 +93,22 @@ class CartService:
                 existing_item.quantity += item_data.quantity
                 _, total_price, _ = await self._calculate_item_prices(
                     session,
-                    existing_item.product_variant_id,
+                    existing_item.product_id,
                     existing_item.quantity,
-                    item_data.customizations
                 )
                 existing_item.total_price = total_price
 
             else:
                 unit_price, total_price, formatted_customizations = await self._calculate_item_prices(
                     session,
-                    item_data.product_variant_id,
+                    item_data.product_id,
                     item_data.quantity,
-                    [c.model_dump() for c in item_data.customizations or []]
                 )
                 new_item = CartItem(
                     cart_id=cart.id,
-                    product_variant_id=item_data.product_variant_id,
+                    product_id=item_data.product_id,
                     quantity=item_data.quantity,
                     unit_price=unit_price,
-                    customizations=formatted_customizations,
                     total_price=total_price,
                 )
                 cart.items.append(new_item)
@@ -158,9 +145,8 @@ class CartService:
             item_to_update.quantity = item_data.quantity
             unit_price, total_price, formatted_customizations = await self._calculate_item_prices(
                 session,
-                item_to_update.product_variant_id,
+                item_to_update.product_id,
                 item_data.quantity,
-                [c.model_dump() for c in item_data.customizations or []]
             )
             item_to_update.unit_price = unit_price
             item_to_update.total_price = total_price

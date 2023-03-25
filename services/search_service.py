@@ -22,7 +22,7 @@ class SearchService:
         pagination: PaginationParams,
     ) -> Tuple[List[Product], int]:
         """Search for products based on various criteria."""
-        query = select(Product).options(joinedload(Product.category))
+        query = select(Product)
         
         filters = []
         if search_params.query:
@@ -44,11 +44,7 @@ class SearchService:
         if search_params.is_customizable is not None:
             filters.append(Product.is_customizable == search_params.is_customizable)
             
-        # These filters would require joining with ProductVariant
-        # if search_params.color:
-        #     filters.append(Product.variants.any(ProductVariant.color == search_params.color))
-        # if search_params.size:
-        #     filters.append(Product.variants.any(ProductVariant.size == search_params.size))
+        # Remove commented code and logic for ProductVariant, color, size, etc.
 
         if filters:
             query = query.where(and_(*filters))
