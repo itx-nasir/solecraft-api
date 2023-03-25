@@ -45,10 +45,6 @@ from .user import (
 
 # Product schemas
 from .product import (
-    ProductVariantBase,
-    ProductVariantCreate,
-    ProductVariantUpdate,
-    ProductVariantResponse,
     ProductBase,
     ProductCreate,
     ProductUpdate,
@@ -132,10 +128,6 @@ __all__ = [
     "ResendVerificationRequest",
     
     # Product
-    "ProductVariantBase",
-    "ProductVariantCreate",
-    "ProductVariantUpdate",
-    "ProductVariantResponse",
     "ProductBase",
     "ProductCreate",
     "ProductUpdate",
