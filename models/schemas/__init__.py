@@ -45,10 +45,6 @@ from .user import (
 
 # Product schemas
 from .product import (
-    ProductCustomizationBase,
-    ProductCustomizationCreate,
-    ProductCustomizationUpdate,
-    ProductCustomizationResponse,
     ProductVariantBase,
     ProductVariantCreate,
     ProductVariantUpdate,
@@ -63,7 +59,6 @@ from .product import (
 
 # Cart schemas
 from .cart import (
-    CartItemCustomization,
     CartItemBase,
     CartItemCreate,
     CartItemUpdate,
@@ -137,10 +132,6 @@ __all__ = [
     "ResendVerificationRequest",
     
     # Product
-    "ProductCustomizationBase",
-    "ProductCustomizationCreate",
-    "ProductCustomizationUpdate",
-    "ProductCustomizationResponse",
     "ProductVariantBase",
     "ProductVariantCreate",
     "ProductVariantUpdate",
@@ -153,7 +144,6 @@ __all__ = [
     "ProductSearchRequest",
     
     # Cart
-    "CartItemCustomization",
     "CartItemBase",
     "CartItemCreate",
     "CartItemUpdate",

@@ -8,22 +8,11 @@ from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field, ConfigDict
 import uuid
 
-from .product import ProductVariantResponse
-
-
-class CartItemCustomization(BaseModel):
-    """Cart item customization schema."""
-    customization_id: uuid.UUID
-    type: str = Field(..., description="Customization type: text, image, select")
-    value: Any = Field(..., description="Customization value")
-    price: Decimal = Field(..., ge=0, description="Additional price for this customization")
-
 
 class CartItemBase(BaseModel):
     """Base cart item schema."""
-    product_variant_id: uuid.UUID
+    product_id: uuid.UUID
     quantity: int = Field(..., gt=0, le=100)
-    customizations: Optional[List[CartItemCustomization]] = []
 
 
 class CartItemCreate(CartItemBase):
@@ -34,21 +23,17 @@ class CartItemCreate(CartItemBase):
 class CartItemUpdate(BaseModel):
     """Cart item update schema."""
     quantity: Optional[int] = Field(None, gt=0, le=100)
-    customizations: Optional[List[CartItemCustomization]] = None
 
 
 class CartItemResponse(BaseModel):
     """Cart item response schema."""
     id: uuid.UUID
     cart_id: uuid.UUID
-    product_variant_id: uuid.UUID
     quantity: int
     unit_price: Decimal
     total_price: Decimal
-    customizations: Optional[Dict[str, Any]] = None
     created_at: datetime
     updated_at: datetime
-    product_variant: ProductVariantResponse
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -88,12 +73,10 @@ class CartSummary(BaseModel):
 
 class AddToCartRequest(BaseModel):
     """Add to cart request schema."""
-    product_variant_id: uuid.UUID
+    product_id: uuid.UUID
     quantity: int = Field(..., gt=0, le=100)
-    customizations: Optional[List[CartItemCustomization]] = []
 
 
 class UpdateCartItemRequest(BaseModel):
     """Update cart item request schema."""
-    quantity: int = Field(..., gt=0, le=100)
-    customizations: Optional[List[CartItemCustomization]] = [] 
+    quantity: int = Field(..., gt=0, le=100) 
