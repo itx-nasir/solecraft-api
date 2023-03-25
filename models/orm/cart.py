@@ -60,9 +60,9 @@ class CartItem(Base, TimestampMixin):
         ForeignKey("cart.id"),
         nullable=False
     )
-    product_variant_id: Mapped[uuid.UUID] = mapped_column(
+    product_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("productvariant.id"),
+        ForeignKey("product.id"),
         nullable=False
     )
     
@@ -70,28 +70,17 @@ class CartItem(Base, TimestampMixin):
     quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     unit_price: Mapped[Decimal] = mapped_column(DECIMAL(10, 2), nullable=False)
     
-    # Customization data (JSON field)
-    # Structure: {
-    #   "customization_id": {
-    #     "type": "text",
-    #     "value": "My Custom Text",
-    #     "price": 5.00
-    #   },
-    #   ...
-    # }
-    customizations: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
-    
     # Total price including customizations
     total_price: Mapped[Decimal] = mapped_column(DECIMAL(10, 2), nullable=False)
     
     # Relationships
     cart: Mapped["Cart"] = relationship("Cart", back_populates="items")
-    product_variant: Mapped["ProductVariant"] = relationship("ProductVariant")
+    product: Mapped["Product"] = relationship("Product")
     
     # Indexes
     __table_args__ = (
         Index('ix_cartitem_cart_id', 'cart_id'),
-        Index('ix_cartitem_variant_id', 'product_variant_id'),
+        Index('ix_cartitem_product_id', 'product_id'),
     )
     
     def __repr__(self) -> str:
