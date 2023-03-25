@@ -110,9 +110,9 @@ class OrderItem(Base, TimestampMixin):
         ForeignKey("order.id"),
         nullable=False
     )
-    product_variant_id: Mapped[uuid.UUID] = mapped_column(
+    product_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("productvariant.id"),
+        ForeignKey("product.id"),
         nullable=False
     )
     
@@ -125,20 +125,17 @@ class OrderItem(Base, TimestampMixin):
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     unit_price: Mapped[Decimal] = mapped_column(DECIMAL(10, 2), nullable=False)
     
-    # Customization data (JSON field)
-    customizations: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
-    
     # Total price including customizations
     total_price: Mapped[Decimal] = mapped_column(DECIMAL(10, 2), nullable=False)
     
     # Relationships
     order: Mapped["Order"] = relationship("Order", back_populates="items")
-    product_variant: Mapped["ProductVariant"] = relationship("ProductVariant")
+    product: Mapped["Product"] = relationship("Product")
     
     # Indexes
     __table_args__ = (
         Index('ix_orderitem_order_id', 'order_id'),
-        Index('ix_orderitem_variant_id', 'product_variant_id'),
+        Index('ix_orderitem_product_id', 'product_id'),
     )
     
     def __repr__(self) -> str:
