@@ -18,10 +18,9 @@ PaymentStatus = Literal["pending", "processing", "completed", "failed", "refunde
 
 class OrderItemBase(BaseModel):
     """Base order item schema."""
-    product_variant_id: uuid.UUID
+    product_id: uuid.UUID
     quantity: int = Field(..., gt=0)
     unit_price: Decimal = Field(..., gt=0)
-    customizations: Optional[Dict[str, Any]] = None
 
 
 class OrderItemCreate(OrderItemBase):
@@ -33,17 +32,15 @@ class OrderItemResponse(BaseModel):
     """Order item response schema."""
     id: uuid.UUID
     order_id: uuid.UUID
-    product_variant_id: uuid.UUID
+    product_id: uuid.UUID
     product_name: str
     variant_name: str
     sku: str
     quantity: int
     unit_price: Decimal
     total_price: Decimal
-    customizations: Optional[Dict[str, Any]] = None
     created_at: datetime
     updated_at: datetime
-    product_variant: ProductVariantResponse
 
     model_config = ConfigDict(from_attributes=True)
 
