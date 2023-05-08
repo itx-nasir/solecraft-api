@@ -61,7 +61,7 @@ class HealthCheck(BaseModel):
     timestamp: datetime
     version: str
     database: str = Field(default="connected")
-    redis: str = Field(default="connected")
+    scheduler: str = Field(default="running")
 
 
 class TokenResponse(BaseModel):
@@ -73,16 +73,17 @@ class TokenResponse(BaseModel):
 
 
 class TokenData(BaseModel):
-    """JWT token data schema."""
-    user_id: uuid.UUID
+    """Schema for data contained within a JWT."""
+    user_id: str
     email: Optional[str] = None
-    is_guest: bool = Field(default=False)
+    is_guest: bool = False
     session_id: Optional[str] = None
+    scope: Optional[str] = None
 
 
 class ReviewBase(BaseModel):
-    """Base review schema."""
-    rating: int = Field(..., ge=1, le=5, description="Rating from 1 to 5 stars")
+    """Base schema for a review."""
+    rating: int = Field(..., ge=1, le=5)
     title: Optional[str] = Field(None, max_length=200)
     comment: Optional[str] = None
 
