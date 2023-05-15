@@ -5,83 +5,53 @@ A production-ready backend API for a customizable shoes selling platform built w
 ## 🚀 Features
 
 ### 🧱 Architecture
-- **Clean Architecture** with proper separation of concerns
-- **Domain-Driven Design** with distinct business domains
-- **Repository Pattern** for data access abstraction
-- **Dependency Injection** for loose coupling
+- **Layered Architecture** with proper separation of concerns
+- **Service Layer** for core business logic
+- **Pydantic** for robust data validation
 - **SOLID Principles** implementation
 
 ### 🛍️ Business Features
-- **Multi-tenant Support** - Both guest and registered users
-- **Product Customization** - Text, image, and select-based customizations
-- **Advanced Inventory** - Variant-based stock management
-- **Shopping Cart** - Persistent cart with customizations
-- **Order Management** - Complete order lifecycle
-- **Review System** - Product reviews and ratings
-- **Discount Codes** - Flexible coupon system
+- **Guest and Registered Users**
+- **Product Management**
+- **Shopping Cart**
+- **Order Management**
+- **Review System**
 
 ### 🔐 Security & Auth
 - **JWT Authentication** for registered users
-- **Guest Checkout** flow
+- **Admin and User Roles** via a simple `is_admin` flag
 - **Rate Limiting** middleware
 - **Input Validation** with Pydantic
-- **Security Headers** and CORS configuration
+- **CORS** configuration
 
 ### ⚡ Performance & Scalability
 - **Async/Await** throughout the application
 - **Database Connection Pooling**
-- **Redis Caching** support
-- **Celery Task Queue** for background jobs
-- **Structured Logging** with correlation IDs
+- **FastAPI BackgroundTasks** for asynchronous operations
+- **APScheduler** for scheduled jobs
+- **Structured Logging**
 - **Health Checks** and monitoring
 
 ## 🏗️ Architecture Overview
 
+The architecture is simplified for ease of development and deployment, focusing on a clear separation of concerns without unnecessary layers for an MVP.
+
 ```
 solecraft-api/
 ├── api/                    # FastAPI routers (REST endpoints)
-├── controllers/            # Input validation and output formatting
-├── services/              # Core business logic
-├── repositories/          # Data access layer
-├── interfaces/            # Abstract interfaces (Dependency Inversion)
+├── services/               # Core business logic and database interaction
 ├── models/
-│   ├── orm/              # SQLAlchemy models
-│   └── schemas/          # Pydantic models
-├── middleware/            # Custom middlewares
-├── infrastructure/        # DB setup, email, logger, broker
-├── workers/              # Celery workers for async tasks
-├── core/                 # Global config, constants, DI container
-├── tests/                # Unit and integration tests
-├── migrations/           # Alembic database migrations
-├── main.py              # FastAPI app entry point
-├── Dockerfile           # Production Docker image
-├── docker-compose.yml   # Multi-service orchestration
-└── alembic.ini         # Database migration configuration
+│   ├── orm/                # SQLAlchemy models (data structure)
+│   └── schemas/            # Pydantic models (API data shapes)
+├── middleware/             # Custom middlewares (e.g., auth)
+├── core/                   # Global config, scheduler, and database setup
+├── tests/                  # Unit and integration tests
+├── migrations/             # Alembic database migrations
+├── main.py                 # FastAPI app entry point
+├── Dockerfile              # Production Docker image
+├── docker-compose.yml      # Local development setup
+└── requirements.txt        # Python dependencies
 ```
-
-## 📦 Database Schema
-
-### Core Entities
-
-#### User Domain
-- **Users** - Both registered and guest users
-- **Addresses** - Multiple addresses per user
-
-#### Product Domain
-- **Categories** - Hierarchical product categories
-- **Products** - Base product information
-- **ProductVariants** - Color, size, material variations
-- **ProductCustomizations** - Customization options
-
-#### Commerce Domain
-- **Cart** - Shopping cart with items
-- **CartItems** - Products with customizations in cart
-- **Orders** - Complete order information
-- **OrderItems** - Order line items with customizations
-
-#### Engagement Domain
-- **Reviews** - Product reviews and ratings
-- **DiscountCodes** - Coupon and discount system
 
 ## 🛠️ Technology Stack
 
@@ -93,19 +63,15 @@ solecraft-api/
 
 ### Database & Storage
 - **PostgreSQL 15** - Primary database
-- **Redis 7** - Caching and session storage
 - **Alembic** - Database migrations
 
 ### Background Tasks
-- **Celery** - Distributed task queue
-- **RabbitMQ** - Message broker
-- **Flower** - Task monitoring
+- **FastAPI BackgroundTasks** - For tasks like sending emails
+- **APScheduler** - For scheduled cleanup jobs
 
 ### DevOps & Deployment
 - **Docker** - Containerization
-- **Docker Compose** - Multi-service orchestration
-- **Gunicorn** - WSGI server for production
-- **Nginx** - Reverse proxy (optional)
+- **Docker Compose** - Local development orchestration
 
 ### Development Tools
 - **Black** - Code formatting
@@ -118,8 +84,6 @@ solecraft-api/
 
 ### Prerequisites
 - Docker and Docker Compose
-- Python 3.11+ (for local development)
-- PostgreSQL 15+ (if running locally)
 
 ### 1. Clone the Repository
 ```bash
@@ -127,39 +91,41 @@ git clone <repository-url>
 cd solecraft-api
 ```
 
-### 2. Environment Configuration
+### 2. Run with Docker Compose
+This is the fastest way to get started. It will build the API image and start a PostgreSQL database container.
+
 ```bash
-# Copy environment template
-cp .env.example .env
+# Start all services in the background
+docker-compose up -d --build
 
-# Edit .env with your configuration
-nano .env
-```
-
-### 3. Run with Docker Compose
-```bash
-# Start all services
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
+# View logs for the API
+docker-compose logs -f api
 
 # Stop services
 docker-compose down
 ```
+The API will be available at `http://localhost:8000`.
 
-### 4. Database Setup
+### 3. Database Migrations
+Once the containers are running, apply the database migrations.
+
 ```bash
 # Run migrations
 docker-compose exec api alembic upgrade head
+```
+This command only needs to be run once initially and then again anytime there are new migrations.
 
-# Create initial data (optional)
-docker-compose exec api python scripts/seed_data.py
+## 🔧 Local Development (Without Docker for the API)
+
+If you prefer to run the Python application directly on your machine.
+
+### 1. Start Database
+```bash
+# Start only the postgres database service
+docker-compose up -d postgres
 ```
 
-## 🔧 Local Development
-
-### 1. Setup Virtual Environment
+### 2. Setup Virtual Environment
 ```bash
 # Create virtual environment
 python -m venv venv
@@ -174,41 +140,33 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Database Setup
+### 3. Configure Environment
+The application uses Pydantic settings and reads from environment variables. You can use a `.env` file for local development.
 ```bash
-# Start only database services
-docker-compose up -d postgres redis rabbitmq
+# The application will work with default settings pointing to the local Docker database.
+# You can create a .env file to override settings if needed.
+# Example:
+# DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/solecraft_db
+```
 
-# Run migrations
+### 4. Run Migrations
+```bash
+# Ensure your .env file is configured or variables are exported
 alembic upgrade head
 ```
 
-### 3. Run the Application
+### 5. Run the Application
 ```bash
-# Development server with auto-reload
-python main.py
-
-# Or with uvicorn directly
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-### 4. Run Celery Worker (separate terminal)
-```bash
-celery -A workers.celery_app worker --loglevel=info
-```
-
-### 5. Run Celery Beat (separate terminal)
-```bash
-celery -A workers.celery_app beat --loglevel=info
+# The app will start with auto-reload
+uvicorn main:app --reload
 ```
 
 ## 📡 API Documentation
 
-Once the application is running, you can access:
+Once the application is running, you can access the interactive API documentation:
 
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
-- **OpenAPI JSON**: http://localhost:8000/openapi.json
 
 ### Key Endpoints
 

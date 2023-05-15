@@ -11,12 +11,11 @@ from sqlalchemy.pool import StaticPool
 
 from main import app
 from core.config import settings
-from infrastructure.database import get_async_session
-from models.orm import Base
+from core.database import get_async_session, Base
 from middleware.auth import get_password_hash, create_access_token
 
-# Test database URL
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+# Use a separate database for testing
+TEST_DATABASE_URL = settings.database_url.replace("solecraft_db", "solecraft_test_db")
 
 
 @pytest.fixture(scope="session")
