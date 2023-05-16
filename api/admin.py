@@ -62,9 +62,50 @@ async def update_order_status(
     order = await admin_service.update_order_status(session, order_id, status_update)
     if not order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found.")
-    # Eagerly load items relationship before conversion
-    await session.refresh(order, attribute_names=["items"])
-    order_response = OrderResponse.model_validate(order)
+    # Eagerly load all relationships before conversion
+    await session.refresh(order, attribute_names=["items", "user", "discount_code"])
+    # Manually build dict for OrderResponse
+    order_dict = {
+        "id": order.id,
+        "user_id": order.user_id,
+        "order_number": order.order_number,
+        "status": order.status,
+        "payment_status": order.payment_status,
+        "subtotal": order.subtotal,
+        "tax_amount": order.tax_amount,
+        "shipping_amount": order.shipping_amount,
+        "discount_amount": order.discount_amount,
+        "total_amount": order.total_amount,
+        "shipping_address": order.shipping_address,
+        "billing_address": order.billing_address,
+        "shipping_method": order.shipping_method,
+        "tracking_number": order.tracking_number,
+        "payment_method": order.payment_method,
+        "payment_provider": order.payment_provider,
+        "confirmed_at": order.confirmed_at,
+        "shipped_at": order.shipped_at,
+        "delivered_at": order.delivered_at,
+        "notes": order.notes,
+        "customer_notes": order.customer_notes,
+        "items": [
+            {
+                "id": item.id,
+                "order_id": item.order_id,
+                "product_id": item.product_id,
+                "product_name": item.product_name,
+                "sku": item.sku,
+                "quantity": item.quantity,
+                "unit_price": item.unit_price,
+                "total_price": item.total_price,
+                "created_at": item.created_at,
+                "updated_at": item.updated_at,
+            }
+            for item in order.items
+        ],
+        "created_at": order.created_at,
+        "updated_at": order.updated_at,
+    }
+    order_response = OrderResponse(**order_dict)
     return StandardResponse(
         success=True,
         message="Order status updated successfully.",
