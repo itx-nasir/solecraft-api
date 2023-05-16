@@ -6,6 +6,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func
+from sqlalchemy.orm import selectinload
 
 from models.orm.order import Order
 from models.orm.user import User
@@ -37,14 +38,22 @@ class AdminService:
         self, session: AsyncSession, order_id: UUID, status_update: OrderUpdate
     ) -> Optional[Order]:
         """Update the status of an order."""
-        order = await session.get(Order, order_id)
+        # Eagerly load relationships
+        result = await session.execute(
+            select(Order)
+            .options(
+                selectinload(Order.items),
+                selectinload(Order.user),
+                selectinload(Order.discount_code)
+            )
+            .where(Order.id == order_id)
+        )
+        order = result.scalars().first()
         if not order:
             return None
-            
         update_data = status_update.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             setattr(order, key, value)
-            
         await session.flush()
         await session.refresh(order)
         return order
