@@ -12,8 +12,9 @@ from sentry_sdk.integrations.fastapi import FastApiIntegration
 from datetime import datetime
 
 from core.config import settings
-from infrastructure.database import init_database, close_database
+from core.database import init_database, close_database
 from models.schemas import HealthCheck, ErrorResponse
+from core.scheduler import initialize_scheduler, shutdown_scheduler
 
 
 # Configure structured logging
@@ -55,6 +56,7 @@ async def lifespan(app: FastAPI):
     logger.info("Starting up SoleCraft API", version=settings.app_version)
     try:
         await init_database()
+        initialize_scheduler()
         logger.info("Application startup completed")
         yield
     except Exception as e:
@@ -64,6 +66,7 @@ async def lifespan(app: FastAPI):
         # Shutdown
         logger.info("Shutting down SoleCraft API")
         try:
+            shutdown_scheduler()
             await close_database()
             logger.info("Application shutdown completed")
         except Exception as e:
@@ -149,7 +152,7 @@ async def health_check():
         timestamp=datetime.utcnow(),
         version=settings.app_version,
         database="connected",
-        redis="connected"
+        scheduler="running"
     )
 
 

@@ -1,21 +1,19 @@
 """
-SQLAlchemy ORM models package.
+Expose all ORM models for easier imports.
 """
 
 from .base import Base, TimestampMixin
-from .user import User, Address, Role, Permission
+from .user import User, Address
 from .product import Category, Product, ProductVariant, ProductCustomization
 from .cart import Cart, CartItem
 from .order import Order, OrderItem
-from .review import Review, DiscountCode
+from .review import Review
 
 __all__ = [
     "Base",
     "TimestampMixin",
     "User",
     "Address",
-    "Role",
-    "Permission",
     "Category",
     "Product",
     "ProductVariant",
@@ -25,5 +23,4 @@ __all__ = [
     "Order",
     "OrderItem",
     "Review",
-    "DiscountCode",
 ] 

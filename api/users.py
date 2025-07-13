@@ -4,11 +4,11 @@ User profile API routes.
 
 from typing import List
 from uuid import UUID
-from fastapi import APIRouter, Depends, status, Request
+from fastapi import APIRouter, Depends, status, Request, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from infrastructure.database import get_async_session
-from controllers.user_controller import UserController
+from core.database import get_async_session
+from services.user_service import UserService
 from middleware.auth import get_current_user, get_current_active_user
 from models.schemas import (
     UserResponse, UserUpdate, AddressCreate, AddressUpdate, AddressResponse,
@@ -16,7 +16,9 @@ from models.schemas import (
 )
 from models.orm import User
 from middleware.rate_limit import limiter
+import structlog
 
+logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
@@ -32,13 +34,20 @@ async def get_profile(
 ):
     """
     Get current user profile.
-    
-    Returns user information including:
-    - Basic profile data
-    - Account status
-    - Registration details
     """
-    return await UserController.get_profile(current_user, session)
+    try:
+        user_service = UserService(session)
+        user_profile = await user_service.get_user_profile(current_user.id)
+        return StandardResponse(
+            success=True,
+            message="Profile retrieved successfully",
+            data=user_profile
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception as e:
+        logger.error("Get profile error", error=str(e), user_id=current_user.id)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to retrieve profile")
 
 
 @router.put(
@@ -56,16 +65,21 @@ async def update_profile(
 ):
     """
     Update user profile.
-    
-    - **email**: New email address (optional)
-    - **first_name**: First name (optional)
-    - **last_name**: Last name (optional)
-    - **username**: Username (optional)
-    - **phone**: Phone number (optional)
-    
-    Note: Email changes may require verification.
     """
-    return await UserController.update_profile(user_data, current_user, session)
+    try:
+        user_service = UserService(session)
+        updated_user = await user_service.update_user_profile(current_user.id, user_data)
+        return StandardResponse(
+            success=True,
+            message="Profile updated successfully",
+            data=updated_user
+        )
+    except ValueError as e:
+        logger.warning("Profile update failed", error=str(e), user_id=current_user.id)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        logger.error("Profile update error", error=str(e), user_id=current_user.id)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to update profile")
 
 
 @router.get(
@@ -83,7 +97,17 @@ async def get_addresses(
     
     Returns list of all saved addresses for the user.
     """
-    return await UserController.get_addresses(current_user, session)
+    try:
+        user_service = UserService(session)
+        addresses = await user_service.get_user_addresses(current_user.id)
+        return StandardResponse(
+            success=True,
+            message="Addresses retrieved successfully",
+            data=addresses
+        )
+    except Exception as e:
+        logger.error("Get addresses error", error=str(e), user_id=current_user.id)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to retrieve addresses")
 
 
 @router.post(
@@ -102,16 +126,18 @@ async def add_address(
 ):
     """
     Add new address.
-    
-    - **street_address**: Street address (required)
-    - **city**: City (required)
-    - **state**: State/Province (required)
-    - **postal_code**: ZIP/Postal code (required)
-    - **country**: Country (required)
-    - **address_type**: Type of address (home, work, etc.)
-    - **is_default**: Set as default address
     """
-    return await UserController.add_address(address_data, current_user, session)
+    try:
+        user_service = UserService(session)
+        address = await user_service.add_user_address(current_user.id, address_data)
+        return StandardResponse(
+            success=True,
+            message="Address added successfully",
+            data=address
+        )
+    except Exception as e:
+        logger.error("Add address error", error=str(e), user_id=current_user.id)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to add address")
 
 
 @router.put(
@@ -134,7 +160,20 @@ async def update_address(
     Updates the specified address with new information.
     Only the address owner can update their addresses.
     """
-    return await UserController.update_address(address_id, address_data, current_user, session)
+    try:
+        user_service = UserService(session)
+        updated_address = await user_service.update_user_address(current_user.id, address_id, address_data)
+        return StandardResponse(
+            success=True,
+            message="Address updated successfully",
+            data=updated_address
+        )
+    except ValueError as e:
+        logger.warning("Address update failed", error=str(e), user_id=current_user.id, address_id=address_id)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        logger.error("Address update error", error=str(e), user_id=current_user.id, address_id=address_id)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to update address")
 
 
 @router.delete(
@@ -156,4 +195,14 @@ async def delete_address(
     Permanently removes the specified address from user's address book.
     Only the address owner can delete their addresses.
     """
-    return await UserController.delete_address(address_id, current_user, session) 
+    try:
+        user_service = UserService(session)
+        success = await user_service.delete_user_address(current_user.id, address_id)
+        return StandardResponse(
+            success=True,
+            message="Address deleted successfully",
+            data=success
+        )
+    except Exception as e:
+        logger.error("Delete address error", error=str(e), user_id=current_user.id, address_id=address_id)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to delete address") 

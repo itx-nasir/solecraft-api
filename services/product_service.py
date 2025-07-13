@@ -7,8 +7,9 @@ from uuid import UUID
 from slugify import slugify
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, update, delete, func
+from sqlalchemy.orm import selectinload
 
-from repositories.product_repository import ProductRepository
 from models.schemas import (
     ProductCreate, ProductUpdate, ProductResponse, ProductListResponse,
     PaginationParams
@@ -23,24 +24,22 @@ class ProductService:
 
     def __init__(self, session: AsyncSession):
         self.session = session
-        self.product_repo = ProductRepository(session)
 
     async def create_product(self, product_data: ProductCreate) -> ProductResponse:
         """Create a new product."""
         product_dict = product_data.model_dump()
         
-        # Auto-generate slug if not provided
         if not product_data.slug:
             product_dict["slug"] = slugify(product_data.name)
         
-        # Check if slug is unique
-        existing_product = await self.product_repo.get_by_slug(product_dict["slug"])
+        existing_product = await self.get_product_by_slug(product_dict["slug"])
         if existing_product:
             raise ValueError(f"Product with slug '{product_dict['slug']}' already exists.")
 
-        product = await self.product_repo.create(**product_dict)
+        product = Product(**product_dict)
+        self.session.add(product)
         await self.session.commit()
-        await self.session.refresh(product, attribute_names=["category"])
+        await self.session.refresh(product)
 
         logger.info("Product created", product_id=product.id)
         
@@ -48,14 +47,27 @@ class ProductService:
 
     async def get_product_by_id(self, product_id: UUID) -> Optional[ProductResponse]:
         """Get product by ID."""
-        product = await self.product_repo.get_by_id(product_id)
+        stmt = (
+            select(Product)
+            .options(
+                selectinload(Product.category),
+                selectinload(Product.variants),
+                selectinload(Product.customizations),
+                selectinload(Product.reviews),
+            )
+            .where(Product.id == product_id)
+        )
+        result = await self.session.execute(stmt)
+        product = result.scalar_one_or_none()
         if not product:
             return None
         return ProductResponse.model_validate(product)
 
     async def get_product_by_slug(self, slug: str) -> Optional[ProductResponse]:
         """Get product by slug."""
-        product = await self.product_repo.get_by_slug(slug)
+        stmt = select(Product).where(Product.slug == slug)
+        result = await self.session.execute(stmt)
+        product = result.scalar_one_or_none()
         if not product:
             return None
         return ProductResponse.model_validate(product)
@@ -66,21 +78,27 @@ class ProductService:
         """Update a product."""
         update_data = product_data.model_dump(exclude_unset=True)
 
-        # Handle slug update
         if "slug" in update_data:
-            existing_product = await self.product_repo.get_by_slug(update_data["slug"])
-            if existing_product and existing_product.id != product_id:
+            existing_product_slug = await self.get_product_by_slug(update_data["slug"])
+            if existing_product_slug and existing_product_slug.id != product_id:
                 raise ValueError(f"Product with slug '{update_data['slug']}' already exists.")
         elif "name" in update_data and "slug" not in update_data:
-            # If name is updated but slug is not, regenerate slug
             update_data["slug"] = slugify(update_data["name"])
 
-        updated_product = await self.product_repo.update(product_id, **update_data)
+        stmt = (
+            update(Product)
+            .where(Product.id == product_id)
+            .values(**update_data)
+            .returning(Product)
+        )
+        result = await self.session.execute(stmt)
+        updated_product = result.scalar_one_or_none()
+        
         if not updated_product:
             return None
             
         await self.session.commit()
-        await self.session.refresh(updated_product, attribute_names=["category", "variants", "customizations"])
+        await self.session.refresh(updated_product)
         
         logger.info("Product updated", product_id=updated_product.id)
         
@@ -88,7 +106,9 @@ class ProductService:
 
     async def delete_product(self, product_id: UUID) -> bool:
         """Delete a product."""
-        success = await self.product_repo.delete(product_id)
+        stmt = delete(Product).where(Product.id == product_id)
+        result = await self.session.execute(stmt)
+        success = result.rowcount > 0
         if success:
             await self.session.commit()
             logger.info("Product deleted", product_id=product_id)
@@ -100,42 +120,35 @@ class ProductService:
         filters: Optional[Dict[str, Any]] = None
     ) -> Tuple[List[ProductListResponse], int]:
         """List products with pagination and filters."""
-        products, total = await self.product_repo.list(pagination, filters)
-        
-        # Eager load categories for all products in the list
-        for p in products:
-            await self.session.refresh(p, attribute_names=["category"])
+        base_stmt = select(Product)
+        count_stmt = select(func.count(Product.id))
 
-        product_responses = [ProductListResponse.model_validate(p) for p in products]
-        return product_responses, total
-        
-    async def search_products(
-        self,
-        query: Optional[str],
-        category_id: Optional[UUID],
-        filters: Optional[Dict[str, Any]],
-        pagination: PaginationParams,
-    ) -> Tuple[List[ProductListResponse], int]:
-        """Search for products."""
-        products, total = await self.product_repo.search(
-            query=query,
-            category_id=category_id,
-            filters=filters,
-            pagination=pagination
+        if filters:
+            conditions = self._apply_filters(filters)
+            if conditions:
+                base_stmt = base_stmt.where(*conditions)
+                count_stmt = count_stmt.where(*conditions)
+
+        count_result = await self.session.execute(count_stmt)
+        total = count_result.scalar() or 0
+
+        stmt = (
+            base_stmt
+            .offset(pagination.offset)
+            .limit(pagination.page_size)
+            .order_by(Product.created_at.desc())
         )
-        
-        for p in products:
-            await self.session.refresh(p, attribute_names=["category"])
-            
+
+        result = await self.session.execute(stmt)
+        products = result.scalars().all()
         product_responses = [ProductListResponse.model_validate(p) for p in products]
         return product_responses, total
 
-    async def get_featured_products(self, limit: int = 10) -> List[ProductListResponse]:
-        """Get featured products."""
-        products = await self.product_repo.get_featured_products(limit)
-
-        for p in products:
-            await self.session.refresh(p, attribute_names=["category"])
-
-        product_responses = [ProductListResponse.model_validate(p) for p in products]
-        return product_responses 
+    def _apply_filters(self, filters: Dict[str, Any]) -> list:
+        """Helper to apply filter conditions."""
+        conditions = []
+        if "category_id" in filters and filters["category_id"] is not None:
+            conditions.append(Product.category_id == filters["category_id"])
+        if "is_featured" in filters and filters["is_featured"] is not None:
+            conditions.append(Product.is_featured == filters["is_featured"])
+        return conditions 

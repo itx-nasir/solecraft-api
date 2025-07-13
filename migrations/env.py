@@ -14,6 +14,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from core.config import settings
 from models.orm import Base
+# Ensure all models are imported so that Base has them registered
+from models.orm import user, product, cart, order, review
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
