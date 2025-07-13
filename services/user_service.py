@@ -176,6 +176,13 @@ class UserService:
         result = await self.session.execute(select(Address).where(Address.id == address_id))
         return result.scalar_one_or_none()
 
+    async def get_user_address_by_id(self, user_id: UUID, address_id: UUID) -> Optional[Address]:
+        """Get a single address by its ID, scoped to a user."""
+        result = await self.session.execute(
+            select(Address).where(Address.id == address_id, Address.user_id == user_id)
+        )
+        return result.scalar_one_or_none()
+
     async def get_user_addresses(self, user_id: UUID) -> List[AddressResponse]:
         """Get all addresses for a user."""
         result = await self.session.execute(
